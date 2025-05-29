@@ -1,0 +1,38 @@
+CREATE TABLE employee (
+    E_id NUMBER,
+    E_name VARCHAR(10),
+    age NUMBER,
+    sal NUMBER
+);
+
+INSERT INTO employee VALUES (10, 'abhi', 25, 10000);
+INSERT INTO employee VALUES (20, 'rohith', 30, 9000);
+INSERT INTO employee VALUES (30, 'david', 28, 9000);
+INSERT INTO employee VALUES (40, 'rahul', 29, 7000);
+INSERT INTO employee VALUES (50, 'pramod', 31, 8000);
+
+SELECT * FROM employee;
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    v_eid employee.E_id%TYPE;
+    v_ename employee.E_name%TYPE;
+    v_age employee.age%TYPE;
+    v_salary employee.sal%TYPE;
+
+    CURSOR Employee_Cursor IS
+        SELECT E_id, E_name, age, sal FROM employee;
+
+BEGIN
+    OPEN Employee_Cursor;
+    LOOP
+        FETCH Employee_Cursor INTO v_eid, v_ename, v_age, v_salary;
+        EXIT WHEN Employee_Cursor%NOTFOUND;
+
+        DBMS_OUTPUT.PUT_LINE('eid: ' || v_eid || ' ename: ' || v_ename || 
+                             ' age: ' || v_age || ' salary: ' || v_salary);
+    END LOOP;
+    CLOSE Employee_Cursor;
+END;
+/
