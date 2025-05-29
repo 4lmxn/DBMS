@@ -1,0 +1,36 @@
+CREATE TABLE Customers (
+    id NUMBER,
+    name VARCHAR(10),
+    age NUMBER,
+    sal NUMBER,
+    address VARCHAR(50)
+);
+
+INSERT INTO Customers VALUES (10, 'abhi', 25, 10000, 'Bangalore');
+INSERT INTO Customers VALUES (20, 'rohith', 30, 9000, 'Delhi');
+INSERT INTO Customers VALUES (30, 'david', 28, 9000, 'Pune');
+INSERT INTO Customers VALUES (40, 'rahul', 29, 7000, 'Mumbai');
+INSERT INTO Customers VALUES (50, 'pramod', 31, 8000, 'Mysore');
+
+SET SERVEROUTPUT ON;
+
+CREATE OR REPLACE TRIGGER sal_diff
+BEFORE INSERT OR UPDATE ON Customers
+FOR EACH ROW
+WHEN (NEW.id > 0)
+DECLARE
+    sal_diff NUMBER;
+BEGIN
+    IF INSERTING THEN
+        DBMS_OUTPUT.PUT_LINE('Inserted salary: ' || :NEW.sal);
+    ELSIF UPDATING THEN
+        sal_diff := :NEW.sal - :OLD.sal;
+        DBMS_OUTPUT.PUT_LINE('Previous salary: ' || :OLD.sal);
+        DBMS_OUTPUT.PUT_LINE('Current salary: ' || :NEW.sal);
+        DBMS_OUTPUT.PUT_LINE('Salary difference: ' || sal_diff);
+    END IF;
+END;
+/
+
+
+UPDATE Customers SET sal = 10000 WHERE id = 50;
