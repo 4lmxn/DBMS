@@ -1,60 +1,55 @@
-CREATE TABLE N_ROLLCALL (
-    id NUMBER,
-    name VARCHAR2(100),
-    roll_date DATE
+CREATE TABLE N_RollCall (
+    EMPNO NUMBER,
+    ROLL_DATE DATE,
+    STATUS VARCHAR2(20)
 );
 
-INSERT INTO N_ROLLCALL (id, name, roll_date) VALUES
-(1, 'Sparsh', '01-JAN-2015'),
-(2, 'Shubhaman', '01-APR-2016'),
-(3, 'Vikas', '01-MAY-2017');
-
-SELECT * FROM N_ROLLCALL;
-
-CREATE TABLE O_ROLLCALL (
-    id NUMBER,
-    name VARCHAR2(100),
-    roll_date DATE
+CREATE TABLE O_RollCall (
+    EMPNO NUMBER,
+    ROLL_DATE DATE,
+    STATUS VARCHAR2(20)
 );
 
-INSERT INTO O_ROLLCALL (id, name, roll_date) VALUES
-(4, 'Amit', '01-JAN-2013'),
-(5, 'Vikas', '01-MAY-2013'),
-(6, 'Singh', '01-OCT-2020');
+INSERT INTO N_RollCall (EMPNO, ROLL_DATE, STATUS) VALUES (101, DATE '2024-06-01', 'PRESENT');
+INSERT INTO N_RollCall (EMPNO, ROLL_DATE, STATUS) VALUES (102, DATE '2024-06-01', 'ABSENT');
+INSERT INTO N_RollCall (EMPNO, ROLL_DATE, STATUS) VALUES (103, DATE '2024-06-02', 'PRESENT');
+INSERT INTO N_RollCall (EMPNO, ROLL_DATE, STATUS) VALUES (104, DATE '2024-06-03', 'LATE');
+INSERT INTO N_RollCall (EMPNO, ROLL_DATE, STATUS) VALUES (105, DATE '2024-06-04', 'PRESENT');
 
-SELECT * FROM O_ROLLCALL;
+COMMIT;
 
-SET SERVEROUTPUT ON;
+CREATE OR REPLACE PROCEDURE Merge_RollCall_Data AS
+    -- Cursor to select all rows from N_RollCall
+    CURSOR N_RollCall_Cursor IS
+        SELECT * FROM N_RollCall;
 
-DECLARE
-    V_n_rollcall_id N_Rollcall.id%TYPE;
-    V_n_rollcall_name N_Rollcall.name%TYPE;
-    V_n_rollcall_date N_Rollcall.roll_date%TYPE;
-
-    CURSOR c_merge_rollcall_data IS
-        SELECT id, name, roll_date
-        FROM N_RollCall nrc
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM O_RollCall orc
-            WHERE orc.id = nrc.id
-              AND orc.name = nrc.name
-              AND orc.roll_date = nrc.roll_date
-        );
+    -- Variable to hold each row from the cursor
+    v_N_RollCall_Record N_RollCall%ROWTYPE;
+    -- Variable to hold count of existing rows in O_RollCall
+    v_Count NUMBER;
 
 BEGIN
-    OPEN c_merge_rollcall_data;
-    LOOP
-        FETCH c_merge_rollcall_data INTO V_n_rollcall_id, V_n_rollcall_name, V_n_rollcall_date;
-        EXIT WHEN c_merge_rollcall_data%NOTFOUND;
+    -- Loop through each record in the cursor
+    FOR v_N_RollCall_Record IN N_RollCall_Cursor LOOP
+        -- Check if the record already exists in O_RollCall
+        SELECT COUNT(*)
+        INTO v_Count
+        FROM O_RollCall
+        WHERE EMPNO = v_N_RollCall_Record.EMPNO
+          AND ROLL_DATE = v_N_RollCall_Record.ROLL_DATE;
 
-        INSERT INTO O_Rollcall (id, name, roll_date)
-        VALUES (V_n_rollcall_id, V_n_rollcall_name, V_n_rollcall_date);
+        -- If not found, insert the record into O_RollCall
+        IF v_Count = 0 THEN
+            INSERT INTO O_RollCall (EMPNO, ROLL_DATE, STATUS)
+            VALUES (
+                v_N_RollCall_Record.EMPNO,
+                v_N_RollCall_Record.ROLL_DATE,
+                v_N_RollCall_Record.STATUS
+            );
+        END IF;
     END LOOP;
 
-    CLOSE c_merge_rollcall_data;
+    -- Commit the changes
     COMMIT;
-
-    DBMS_OUTPUT.PUT_LINE('Data Merged Successfully from N_Rollcall to O_Rollcall');
-END;
+END Merge_RollCall_Data;
 /
