@@ -1,0 +1,60 @@
+CREATE TABLE N_ROLLCALL (
+    id NUMBER,
+    name VARCHAR2(100),
+    roll_date DATE
+);
+
+INSERT INTO N_ROLLCALL (id, name, roll_date) VALUES
+(1, 'Sparsh', '01-JAN-2015'),
+(2, 'Shubhaman', '01-APR-2016'),
+(3, 'Vikas', '01-MAY-2017');
+
+SELECT * FROM N_ROLLCALL;
+
+CREATE TABLE O_ROLLCALL (
+    id NUMBER,
+    name VARCHAR2(100),
+    roll_date DATE
+);
+
+INSERT INTO O_ROLLCALL (id, name, roll_date) VALUES
+(4, 'Amit', '01-JAN-2013'),
+(5, 'Vikas', '01-MAY-2013'),
+(6, 'Singh', '01-OCT-2020');
+
+SELECT * FROM O_ROLLCALL;
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    V_n_rollcall_id N_Rollcall.id%TYPE;
+    V_n_rollcall_name N_Rollcall.name%TYPE;
+    V_n_rollcall_date N_Rollcall.roll_date%TYPE;
+
+    CURSOR c_merge_rollcall_data IS
+        SELECT id, name, roll_date
+        FROM N_RollCall nrc
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM O_RollCall orc
+            WHERE orc.id = nrc.id
+              AND orc.name = nrc.name
+              AND orc.roll_date = nrc.roll_date
+        );
+
+BEGIN
+    OPEN c_merge_rollcall_data;
+    LOOP
+        FETCH c_merge_rollcall_data INTO V_n_rollcall_id, V_n_rollcall_name, V_n_rollcall_date;
+        EXIT WHEN c_merge_rollcall_data%NOTFOUND;
+
+        INSERT INTO O_Rollcall (id, name, roll_date)
+        VALUES (V_n_rollcall_id, V_n_rollcall_name, V_n_rollcall_date);
+    END LOOP;
+
+    CLOSE c_merge_rollcall_data;
+    COMMIT;
+
+    DBMS_OUTPUT.PUT_LINE('Data Merged Successfully from N_Rollcall to O_Rollcall');
+END;
+/
